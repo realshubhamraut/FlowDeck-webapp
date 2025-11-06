@@ -751,21 +751,10 @@ def update_task_position():
 
 if __name__ == '__main__':
     import socket
+    import os
     
     # Initialize database
     init_db()
-    
-    # Get local IP address
-    def get_local_ip():
-        try:
-            # Create a socket connection to get the local IP
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            return local_ip
-        except Exception:
-            return "Unable to determine"
     
     # Check if port is available
     def is_port_available(port):
@@ -777,29 +766,44 @@ if __name__ == '__main__':
         except OSError:
             return False
     
-    local_ip = get_local_ip()
-    
-    # Try ports 5001, 5002, 5003, etc. (port 5000 is often used by AirPlay on macOS)
-    port = 5001
-    while not is_port_available(port) and port < 5010:
+    # Find available port starting from 5010
+    port = 5010
+    while not is_port_available(port) and port < 5020:
         port += 1
     
-    if port >= 5010:
-        print("\n❌ Error: No available ports found (5001-5009)")
+    if port >= 5020:
+        print("\n❌ Error: No available ports found (5010-5019)")
         print("Please stop other services or manually specify a different port.")
         exit(1)
     
-    print("\n" + "="*60)
-    print("🚀 FlowDeck Server Started!")
-    print("="*60)
-    print(f"📍 Local Access:    http://127.0.0.1:{port}")
-    print(f"🌐 Network Access:  http://{local_ip}:{port}")
-    print("="*60)
-    print("💡 Other devices on your network can access using the Network URL")
-    if port != 5001:
-        print(f"⚠️  Using port {port} (default ports were busy)")
-    print("🛑 Press CTRL+C to quit")
-    print("="*60 + "\n")
+    # Only show banner on main process (not reloader process)
+    # Flask's reloader sets WERKZEUG_RUN_MAIN environment variable
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        # Get local IP address
+        def get_local_ip():
+            try:
+                # Create a socket connection to get the local IP
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                s.close()
+                return local_ip
+            except Exception:
+                return "Unable to determine"
+        
+        local_ip = get_local_ip()
+        
+        print("\n" + "="*60)
+        print("🚀 FlowDeck Server Started!")
+        print("="*60)
+        print(f"📍 Local Access:    http://127.0.0.1:{port}")
+        print(f"🌐 Network Access:  http://{local_ip}:{port}")
+        print("="*60)
+        print("💡 Other devices on your network can access using the Network URL")
+        if port != 5010:
+            print(f"⚠️  Using port {port} (port 5010 was busy)")
+        print("🛑 Press CTRL+C to quit")
+        print("="*60 + "\n")
     
     # Run app on all network interfaces (0.0.0.0)
     app.run(debug=True, host='0.0.0.0', port=port)

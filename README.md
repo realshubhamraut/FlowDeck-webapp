@@ -118,8 +118,8 @@ The application uses **SQLite3** with **6 tables** and includes **6 triggers** f
    ============================================================
    🚀 FlowDeck Server Started!
    ============================================================
-   📍 Local Access:    http://127.0.0.1:5001
-   🌐 Network Access:  http://192.168.1.100:5001
+   📍 Local Access:    http://127.0.0.1:5010
+   🌐 Network Access:  http://192.168.1.100:5010
    ============================================================
    💡 Other devices on your network can access using the Network URL
    🛑 Press CTRL+C to quit
@@ -127,18 +127,18 @@ The application uses **SQLite3** with **6 tables** and includes **6 triggers** f
    ```
    
    **Access Options:**
-   - **On the same computer**: Use `http://localhost:5001` or `http://127.0.0.1:5001`
-   - **From other devices on the same network**: Use the Network URL (e.g., `http://192.168.1.100:5001`)
+   - **On the same computer**: Use `http://localhost:5010` or `http://127.0.0.1:5010`
+   - **From other devices on the same network**: Use the Network URL (e.g., `http://192.168.1.100:5010`)
    
    **Important Network Notes:**
    - All devices must be connected to the **same Wi-Fi network**
-   - Make sure your **firewall** allows connections on port 5001 (or whichever port is shown)
+   - Make sure your **firewall** allows connections on port 5010 (or whichever port is shown)
    - On macOS, you may need to allow Python in System Preferences → Security & Privacy → Firewall
    - The IP address shown is your computer's local network IP
    
    **Port Notes:**
-   - The app automatically uses port **5001** (avoiding port 5000 which is used by macOS AirPlay)
-   - If 5001 is busy, it will try 5002, 5003, etc.
+   - The app automatically uses port **5010** by default
+   - If 5010 is busy, it will try 5011, 5012, etc. up to 5019
    - The actual port will be displayed in the startup message
 
 ## 🔐 Default Login Credentials
