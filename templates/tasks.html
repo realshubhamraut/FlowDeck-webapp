@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks - FlowDeck{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="color: #667eea; margin: 0;">📋 Tasks</h1>
+    <button class="btn btn-success" onclick="openCreateTaskModal()">+ Create Task</button>
+</div>
+
+<div class="card">
+    {% if tasks %}
+    <table>
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Assigned To</th>
+                <th>Created By</th>
+                <th>Due Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>
+                    <strong>{{ task.title }}</strong>
+                    {% if task.description %}
+                    <br><small style="color: #666;">{{ task.description[:60] }}...</small>
+                    {% endif %}
+                </td>
+                <td><span class="badge badge-{{ task.status }}">{{ task.status|replace('_', ' ')|title }}</span></td>
+                <td><span class="badge badge-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                <td>{{ task.assigned_to_name if task.assigned_to_name else 'Unassigned' }}</td>
+                <td>{{ task.created_by_name }}</td>
+                <td>{{ task.due_date if task.due_date else 'No deadline' }}</td>
+                <td>
+                    <select class="form-control" style="width: auto; padding: 0.5rem;" onchange="updateTaskStatus({{ task.id }}, this.value)">
+                        <option value="">Change Status</option>
+                        <option value="todo" {% if task.status == 'todo' %}disabled{% endif %}>To Do</option>
+                        <option value="in_progress" {% if task.status == 'in_progress' %}disabled{% endif %}>In Progress</option>
+                        <option value="review" {% if task.status == 'review' %}disabled{% endif %}>Review</option>
+                        <option value="done" {% if task.status == 'done' %}disabled{% endif %}>Done</option>
+                    </select>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 3rem;">No tasks yet. Create your first task!</p>
+    {% endif %}
+</div>
+
+<!-- Create Task Modal -->
+<div id="createTaskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Create New Task</h2>
+            <span class="close" onclick="closeCreateTaskModal()">&times;</span>
+        </div>
+        <form method="POST" action="{{ url_for('create_task') }}">
+            <div class="form-group">
+                <label for="title">Task Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="priority">Priority</label>
+                <select class="form-control" id="priority" name="priority" required>
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="assigned_to">Assign To</label>
+                <select class="form-control" id="assigned_to" name="assigned_to">
+                    <option value="">Unassigned</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee.full_name }} - {{ employee.job_level|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="due_date">Due Date</label>
+                <input type="date" class="form-control" id="due_date" name="due_date">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Create Task
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openCreateTaskModal() {
+        document.getElementById('createTaskModal').classList.add('active');
+    }
+    
+    function closeCreateTaskModal() {
+        document.getElementById('createTaskModal').classList.remove('active');
+    }
+    
+    async function updateTaskStatus(taskId, newStatus) {
+        if (!newStatus) return;
+        
+        try {
+            const response = await fetch(`/tasks/${taskId}/update-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error updating task: ' + error);
+        }
+    }
+</script>
+{% endblock %}

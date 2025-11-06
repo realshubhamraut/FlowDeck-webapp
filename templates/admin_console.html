@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Console - FlowDeck{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-bottom: 2.5rem;
+        max-width: 1400px;
+    }
+    
+    .stat-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .stat-card h3 {
+        color: #343a40;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #007bff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .management-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 1400px;
+    }
+    
+    .management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .management-header h2 {
+        margin: 0;
+        color: #343a40;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem 3rem;">
+    <h1 style="margin-bottom: 2.5rem; color: #343a40; font-size: 2rem;">Admin Console</h1>
+
+    <div class="stats-container">
+        <div class="stat-card">
+            <h3>Employees</h3>
+            <div class="stat-value">{{ total_employees }}</div>
+            <p class="stat-label">Active employees</p>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Tasks</h3>
+            <div class="stat-value">{{ total_tasks }}</div>
+            <p class="stat-label">Total tasks</p>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Meetings</h3>
+            <div class="stat-value">{{ total_meetings }}</div>
+            <p class="stat-label">Total meetings</p>
+        </div>
+    </div>
+
+    <div class="management-card">
+        <div class="management-header">
+            <h2>Employee Management</h2>
+            <button class="btn btn-success" onclick="openCreateEmployeeModal()">+ Create Employee</button>
+        </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Job Level</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+            <tr>
+                <td>{{ employee.full_name }}</td>
+                <td>{{ employee.email }}</td>
+                <td><span class="badge badge-{{ employee.role }}">{{ employee.role|title }}</span></td>
+                <td>{{ employee.job_level|replace('_', ' ')|title }}</td>
+                <td>{{ employee.created_at[:10] }}</td>
+                <td>
+                    {% if employee.role != 'admin' or employee.id != current_user.id %}
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="openEditModal({{ employee.id }}, '{{ employee.full_name }}', '{{ employee.email }}', '{{ employee.job_level }}')">
+                            Edit
+                        </button>
+                        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="resetPassword({{ employee.id }}, '{{ employee.full_name }}')">
+                            Reset Password
+                        </button>
+                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="deactivateEmployee({{ employee.id }}, '{{ employee.full_name }}')">
+                            Deactivate
+                        </button>
+                    </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- Create Employee Modal -->
+<div id="createEmployeeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Create New Employee</h2>
+            <span class="close" onclick="closeCreateEmployeeModal()">&times;</span>
+        </div>
+        <form id="createEmployeeForm" onsubmit="createEmployee(event)">
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="job_level">Job Level</label>
+                <select class="form-control" id="job_level" name="job_level" required>
+                    <option value="">Select Job Level</option>
+                    <option value="intern">Intern</option>
+                    <option value="developer">Developer</option>
+                    <option value="senior_developer">Senior Developer</option>
+                    <option value="team_lead">Team Lead</option>
+                    <option value="manager">Manager</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Create Employee</button>
+        </form>
+    </div>
+</div>
+
+<!-- Credentials Modal -->
+<div id="credentialsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Employee Created Successfully</h2>
+            <span class="close" onclick="closeCredentialsModal()">&times;</span>
+        </div>
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 5px; margin-bottom: 1rem;">
+            <p style="margin-bottom: 1rem; color: #666;">Save these credentials securely. They won't be shown again!</p>
+            <div style="margin-bottom: 1rem;">
+                <strong>Employee Name:</strong>
+                <div id="cred-name" style="font-size: 1.1rem; margin-top: 0.5rem;"></div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>Email:</strong>
+                <div id="cred-email" style="font-size: 1.1rem; margin-top: 0.5rem;"></div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>Login ID:</strong>
+                <div id="cred-login" style="font-size: 1.2rem; margin-top: 0.5rem; color: #007bff; font-family: monospace;"></div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>Password:</strong>
+                <div id="cred-password" style="font-size: 1.2rem; margin-top: 0.5rem; color: #007bff; font-family: monospace;"></div>
+            </div>
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="closeCredentialsModal()">
+            Got it, Close
+        </button>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div id="editEmployeeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Employee</h2>
+            <span class="close" onclick="closeEditModal()">&times;</span>
+        </div>
+        <form id="editEmployeeForm" onsubmit="updateEmployee(event)">
+            <input type="hidden" id="edit_user_id" name="user_id">
+            
+            <div class="form-group">
+                <label for="edit_full_name">Full Name</label>
+                <input type="text" class="form-control" id="edit_full_name" name="full_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_email">Email</label>
+                <input type="email" class="form-control" id="edit_email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_job_level">Job Level</label>
+                <select class="form-control" id="edit_job_level" name="job_level" required>
+                    <option value="intern">Intern</option>
+                    <option value="developer">Developer</option>
+                    <option value="senior_developer">Senior Developer</option>
+                    <option value="team_lead">Team Lead</option>
+                    <option value="manager">Manager</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Update Employee</button>
+        </form>
+    </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Password Reset Successful</h2>
+            <span class="close" onclick="closePasswordModal()">&times;</span>
+        </div>
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 5px; margin-bottom: 1rem;">
+            <p style="margin-bottom: 1rem; color: #666;">Password has been reset. Share this with the employee:</p>
+            <div style="margin-bottom: 1rem;">
+                <strong>Employee:</strong>
+                <div id="pwd-name" style="font-size: 1.1rem; margin-top: 0.5rem;"></div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>New Password:</strong>
+                <div id="pwd-password" style="font-size: 1.2rem; margin-top: 0.5rem; color: #007bff; font-family: monospace; font-weight: bold;"></div>
+            </div>
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="closePasswordModal()">
+            Close
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openCreateEmployeeModal() {
+        document.getElementById('createEmployeeModal').classList.add('active');
+    }
+    
+    function closeCreateEmployeeModal() {
+        document.getElementById('createEmployeeModal').classList.remove('active');
+        document.getElementById('createEmployeeForm').reset();
+    }
+    
+    function closeCredentialsModal() {
+        document.getElementById('credentialsModal').classList.remove('active');
+        location.reload();
+    }
+    
+    function openEditModal(userId, fullName, email, jobLevel) {
+        document.getElementById('edit_user_id').value = userId;
+        document.getElementById('edit_full_name').value = fullName;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_job_level').value = jobLevel;
+        document.getElementById('editEmployeeModal').classList.add('active');
+    }
+    
+    function closeEditModal() {
+        document.getElementById('editEmployeeModal').classList.remove('active');
+    }
+    
+    function closePasswordModal() {
+        document.getElementById('passwordModal').classList.remove('active');
+    }
+    
+    async function updateEmployee(event) {
+        event.preventDefault();
+        
+        const userId = document.getElementById('edit_user_id').value;
+        const formData = new FormData(event.target);
+        
+        try {
+            const response = await fetch(`/admin/edit-employee/${userId}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                closeEditModal();
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error updating employee: ' + error);
+        }
+    }
+    
+    async function resetPassword(userId, userName) {
+        if (confirm(`Reset password for ${userName}?`)) {
+            try {
+                const response = await fetch(`/admin/reset-password/${userId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('pwd-name').textContent = userName;
+                    document.getElementById('pwd-password').textContent = result.password;
+                    document.getElementById('passwordModal').classList.add('active');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error resetting password: ' + error);
+            }
+        }
+    }
+    
+    async function createEmployee(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        
+        try {
+            const response = await fetch('{{ url_for("create_employee") }}', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                closeCreateEmployeeModal();
+                
+                // Show credentials modal
+                document.getElementById('cred-name').textContent = result.full_name;
+                document.getElementById('cred-email').textContent = result.email;
+                document.getElementById('cred-login').textContent = result.login_id;
+                document.getElementById('cred-password').textContent = result.password;
+                document.getElementById('credentialsModal').classList.add('active');
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error creating employee: ' + error);
+        }
+    }
+    
+    async function deactivateEmployee(userId, userName) {
+        if (confirm(`Are you sure you want to deactivate ${userName}?`)) {
+            try {
+                const response = await fetch(`/admin/deactivate-employee/${userId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error deactivating employee: ' + error);
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Create Organization - FlowDeck{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #f5f7fa;
+    }
+    
+    .container {
+        margin: 0;
+        max-width: 100%;
+        padding: 2rem;
+    }
+    
+    .create-org-card {
+        background: white;
+        border-radius: 12px;
+        padding: 4rem 5rem;
+        border: 1px solid #e0e0e0;
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+    }
+    
+    .create-org-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .create-org-header h1 {
+        font-size: 2.5rem;
+        color: #1a1a1a;
+        margin-bottom: 0.75rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+    
+    .create-org-header p {
+        color: #6c757d;
+        font-size: 1.1rem;
+        font-weight: 400;
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding: 2rem;
+        background: #fafbfc;
+        border-radius: 10px;
+        border: 2px solid #e0e0e0;
+    }
+    
+    .form-section h3 {
+        color: #1a1a1a;
+        margin-bottom: 1.5rem;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .form-group {
+        margin-bottom: 1.75rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    
+    .back-link {
+        text-align: center;
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    .back-link a {
+        color: #6c757d;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+    
+    .back-link a:hover {
+        color: #007bff;
+    }
+    
+    .info-box {
+        background: #e7f3ff;
+        border: 2px solid #b3d9ff;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2.5rem;
+        color: #004085;
+    }
+    
+    .info-box strong {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+    
+    .info-box small {
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 768px) {
+        .create-org-card {
+            padding: 2rem;
+            max-width: 95%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-org-card">
+    <div class="create-org-header">
+        <h1>Create New Organization</h1>
+        <p>Set up your organization and admin account</p>
+    </div>
+    
+    <div class="info-box">
+        <strong>What happens next?</strong>
+        <small>We'll create your organization and a default admin account. You'll receive the admin credentials to get started.</small>
+    </div>
+    
+    <form method="POST" action="{{ url_for('create_organization') }}">
+        <!-- Organization Details -->
+        <div class="form-section">
+            <h3>Organization Details</h3>
+            <div class="form-group">
+                <label for="org_name">Organization Name</label>
+                <input type="text" class="form-control" id="org_name" name="org_name" 
+                       placeholder="e.g., Acme Corporation" required autofocus>
+            </div>
+        </div>
+        
+        <!-- Admin Details -->
+        <div class="form-section">
+            <h3>Admin Account Details</h3>
+            <div class="form-group">
+                <label for="admin_name">Admin Full Name</label>
+                <input type="text" class="form-control" id="admin_name" name="admin_name" 
+                       placeholder="e.g., John Doe" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="admin_email">Admin Email</label>
+                <input type="email" class="form-control" id="admin_email" name="admin_email" 
+                       placeholder="admin@company.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="admin_login_id">Admin Login ID</label>
+                <input type="text" class="form-control" id="admin_login_id" name="admin_login_id" 
+                       placeholder="e.g., admin or johndoe_admin" required>
+                <small class="form-text text-muted">This will be used to login to the admin panel</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="admin_password">Admin Password</label>
+                <input type="password" class="form-control" id="admin_password" name="admin_password" 
+                       placeholder="Enter a strong password" required minlength="6">
+                <small class="form-text text-muted">Minimum 6 characters</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="admin_password_confirm">Confirm Password</label>
+                <input type="password" class="form-control" id="admin_password_confirm" name="admin_password_confirm" 
+                       placeholder="Re-enter password" required minlength="6">
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+            Create Organization & Admin Account
+        </button>
+    </form>
+    
+    <div class="back-link">
+        <a href="{{ url_for('login') }}">← Back to Login</a>
+    </div>
+</div>
+
+<script>
+// Password match validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const password = document.getElementById('admin_password').value;
+    const confirm = document.getElementById('admin_password_confirm').value;
+    
+    if (password !== confirm) {
+        e.preventDefault();
+        alert('Passwords do not match! Please try again.');
+        document.getElementById('admin_password_confirm').focus();
+    }
+});
+</script>
+{% endblock %}

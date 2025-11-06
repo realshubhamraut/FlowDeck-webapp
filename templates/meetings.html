@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Meetings - FlowDeck{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="color: #667eea; margin: 0;">📅 Meetings</h1>
+    <button class="btn btn-success" onclick="openCreateMeetingModal()">+ Schedule Meeting</button>
+</div>
+
+<div class="card">
+    {% if meetings %}
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Date & Time</th>
+                <th>Duration</th>
+                <th>Location</th>
+                <th>Participants</th>
+                <th>Organized By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for meeting in meetings %}
+            <tr>
+                <td><strong>{{ meeting.title }}</strong></td>
+                <td>{{ meeting.meeting_date[:16]|replace('T', ' at ') }}</td>
+                <td>{{ meeting.duration_minutes }} min</td>
+                <td>{{ meeting.location if meeting.location else 'Not specified' }}</td>
+                <td>{{ meeting.participant_count }} people</td>
+                <td>{{ meeting.created_by_name }}</td>
+                <td>
+                    <a href="{{ url_for('view_meeting', meeting_id=meeting.id) }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 3rem;">No meetings scheduled yet. Create your first meeting!</p>
+    {% endif %}
+</div>
+
+<!-- Create Meeting Modal -->
+<div id="createMeetingModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Schedule New Meeting</h2>
+            <span class="close" onclick="closeCreateMeetingModal()">&times;</span>
+        </div>
+        <form method="POST" action="{{ url_for('create_meeting') }}">
+            <div class="form-group">
+                <label for="title">Meeting Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="meeting_date">Date & Time</label>
+                <input type="datetime-local" class="form-control" id="meeting_date" name="meeting_date" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration">Duration (minutes)</label>
+                <input type="number" class="form-control" id="duration" name="duration" value="60" min="15" step="15">
+            </div>
+            
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" class="form-control" id="location" name="location" placeholder="Conference room, Zoom link, etc.">
+            </div>
+            
+            <div class="form-group">
+                <label>Select Participants</label>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 0.5rem;">
+                    {% for employee in employees %}
+                    <label style="display: block; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="participants[]" value="{{ employee.id }}" style="margin-right: 0.5rem;">
+                        {{ employee.full_name }} - <span class="badge badge-{{ employee.job_level }}">{{ employee.job_level|replace('_', ' ')|title }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Schedule Meeting
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openCreateMeetingModal() {
+        document.getElementById('createMeetingModal').classList.add('active');
+        
+        // Set default date to current date/time
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('meeting_date').value = now.toISOString().slice(0, 16);
+    }
+    
+    function closeCreateMeetingModal() {
+        document.getElementById('createMeetingModal').classList.remove('active');
+    }
+</script>
+{% endblock %}

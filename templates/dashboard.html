@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FlowDeck{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-box {
+        flex: 1;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .mini-kanban {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .kanban-col {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 0.75rem;
+        min-height: 300px;
+    }
+    
+    .kanban-col-header {
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
+        border-bottom: 2px solid #ddd;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .task-count {
+        background: white;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .mini-task-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-left: 3px solid #555;
+        border-radius: 3px;
+        padding: 0.65rem;
+        margin-bottom: 0.5rem;
+        cursor: move;
+        font-size: 0.85rem;
+    }
+    
+    .mini-task-card:hover {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .mini-task-card.dragging {
+        opacity: 0.5;
+    }
+    
+    .mini-task-title {
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+        color: #333;
+    }
+    
+    .mini-task-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    .kanban-col.drag-over {
+        background: #e8f4f8;
+        border-color: #4a90e2;
+    }
+    
+    .priority-border-low {
+        border-left-color: #28a745;
+    }
+    
+    .priority-border-medium {
+        border-left-color: #ffc107;
+    }
+    
+    .priority-border-high {
+        border-left-color: #fd7e14;
+    }
+    
+    .priority-border-urgent {
+        border-left-color: #dc3545;
+    }
+    
+    .simple-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    
+    .simple-table th,
+    .simple-table td {
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .simple-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #555;
+    }
+    
+    .simple-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .simple-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: #333;
+    }
+    
+    @media (max-width: 1200px) {
+        .mini-kanban {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .mini-kanban {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-bar {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem; color: #333;">Welcome, {{ current_user.full_name }}</h2>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="stat-box">
+        <div class="stat-number">{{ my_tasks }}</div>
+        <div class="stat-label">My Tasks</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ upcoming_meetings }}</div>
+        <div class="stat-label">Upcoming Meetings</div>
+    </div>
+    {% if current_user.is_admin() %}
+    <div class="stat-box">
+        <div class="stat-number">{{ total_employees }}</div>
+        <div class="stat-label">Total Employees</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Mini Kanban Board -->
+<div class="simple-card">
+    <div class="simple-card-title">My Tasks - Kanban View</div>
+    <div class="mini-kanban">
+        <div class="kanban-col" data-status="todo">
+            <div class="kanban-col-header">
+                <span>To Do</span>
+                <span class="task-count">{{ tasks_by_status.todo|length }}</span>
+            </div>
+            <div class="kanban-tasks">
+                {% for task in tasks_by_status.todo %}
+                <div class="mini-task-card priority-border-{{ task.priority }}" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="mini-task-title">{{ task.title }}</div>
+                    <div class="mini-task-meta">
+                        <span class="badge badge-{{ task.priority }}">{{ task.priority|title }}</span>
+                        {% if task.due_date %}<span>{{ task.due_date }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="kanban-col" data-status="in_progress">
+            <div class="kanban-col-header">
+                <span>In Progress</span>
+                <span class="task-count">{{ tasks_by_status.in_progress|length }}</span>
+            </div>
+            <div class="kanban-tasks">
+                {% for task in tasks_by_status.in_progress %}
+                <div class="mini-task-card priority-border-{{ task.priority }}" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="mini-task-title">{{ task.title }}</div>
+                    <div class="mini-task-meta">
+                        <span class="badge badge-{{ task.priority }}">{{ task.priority|title }}</span>
+                        {% if task.due_date %}<span>{{ task.due_date }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="kanban-col" data-status="review">
+            <div class="kanban-col-header">
+                <span>Review</span>
+                <span class="task-count">{{ tasks_by_status.review|length }}</span>
+            </div>
+            <div class="kanban-tasks">
+                {% for task in tasks_by_status.review %}
+                <div class="mini-task-card priority-border-{{ task.priority }}" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="mini-task-title">{{ task.title }}</div>
+                    <div class="mini-task-meta">
+                        <span class="badge badge-{{ task.priority }}">{{ task.priority|title }}</span>
+                        {% if task.due_date %}<span>{{ task.due_date }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="kanban-col" data-status="done">
+            <div class="kanban-col-header">
+                <span>Done</span>
+                <span class="task-count">{{ tasks_by_status.done|length }}</span>
+            </div>
+            <div class="kanban-tasks">
+                {% for task in tasks_by_status.done %}
+                <div class="mini-task-card priority-border-{{ task.priority }}" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="mini-task-title">{{ task.title }}</div>
+                    <div class="mini-task-meta">
+                        <span class="badge badge-{{ task.priority }}">{{ task.priority|title }}</span>
+                        {% if task.due_date %}<span>{{ task.due_date }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Meetings -->
+<div class="simple-card">
+    <div class="simple-card-title">Upcoming Meetings</div>
+    {% if upcoming_meetings_list %}
+    <table class="simple-table">
+        <thead>
+            <tr>
+                <th>Meeting</th>
+                <th>Date</th>
+                <th>Duration</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for meeting in upcoming_meetings_list %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('view_meeting', meeting_id=meeting.id) }}" style="color: #4a90e2; text-decoration: none;">
+                        {{ meeting.title }}
+                    </a>
+                </td>
+                <td>{{ meeting.meeting_date[:16]|replace('T', ' ') }}</td>
+                <td>{{ meeting.duration_minutes }} min</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #666; text-align: center; padding: 1.5rem;">No upcoming meetings.</p>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="simple-card">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('tasks') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">View All Tasks</a>
+        <a href="{{ url_for('meetings') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">View All Meetings</a>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('admin_console') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Admin Console</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let draggedElement = null;
+    
+    // Add event listeners to all task cards
+    document.querySelectorAll('.mini-task-card').forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+    });
+    
+    // Add event listeners to all kanban columns
+    document.querySelectorAll('.kanban-col').forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('drop', handleDrop);
+        column.addEventListener('dragleave', handleDragLeave);
+    });
+    
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+    
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        document.querySelectorAll('.kanban-col').forEach(col => {
+            col.classList.remove('drag-over');
+        });
+    }
+    
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        this.classList.add('drag-over');
+        return false;
+    }
+    
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+    
+    async function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        
+        this.classList.remove('drag-over');
+        
+        if (draggedElement !== this) {
+            const newStatus = this.getAttribute('data-status');
+            const taskId = draggedElement.getAttribute('data-task-id');
+            
+            try {
+                const response = await fetch('/kanban/update-position', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        task_id: taskId,
+                        status: newStatus,
+                        position: 0
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error updating task: ' + error);
+            }
+        }
+        
+        return false;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meeting.title }} - FlowDeck{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('meetings') }}" style="color: #667eea; text-decoration: none; margin-bottom: 1rem; display: inline-block;">
+    ← Back to Meetings
+</a>
+
+<div class="card">
+    <h1 style="color: #667eea; margin-bottom: 1.5rem;">{{ meeting.title }}</h1>
+    
+    {% if user_participation %}
+    <div style="margin-bottom: 1.5rem; padding: 1rem; background: {% if user_participation.status == 'accepted' %}#d4edda{% elif user_participation.status == 'declined' %}#f8d7da{% else %}#fff3cd{% endif %}; border-radius: 8px; border: 1px solid {% if user_participation.status == 'accepted' %}#c3e6cb{% elif user_participation.status == 'declined' %}#f5c6cb{% else %}#ffeaa7{% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>Your Status:</strong> 
+                <span style="font-size: 1.1rem;">
+                    {% if user_participation.status == 'accepted' %}
+                    ✅ Accepted
+                    {% elif user_participation.status == 'declined' %}
+                    ❌ Declined
+                    {% else %}
+                    ⏳ Pending
+                    {% endif %}
+                </span>
+            </div>
+            {% if user_participation.status == 'pending' %}
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-success" onclick="updateMeetingStatus('accepted')" style="padding: 0.5rem 1.5rem;">
+                    ✓ Accept
+                </button>
+                <button class="btn btn-danger" onclick="updateMeetingStatus('declined')" style="padding: 0.5rem 1.5rem;">
+                    ✗ Decline
+                </button>
+            </div>
+            {% else %}
+            <button class="btn btn-secondary" onclick="updateMeetingStatus('pending')" style="padding: 0.5rem 1.5rem;">
+                Change Response
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="grid grid-2">
+        <div>
+            <h3 style="color: #667eea; margin-bottom: 1rem;">Meeting Details</h3>
+            <div style="margin-bottom: 1rem;">
+                <strong>📅 Date & Time:</strong><br>
+                <span style="font-size: 1.1rem;">{{ meeting.meeting_date[:16]|replace('T', ' at ') }}</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>⏱️ Duration:</strong><br>
+                <span style="font-size: 1.1rem;">{{ meeting.duration_minutes }} minutes</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>📍 Location:</strong><br>
+                <span style="font-size: 1.1rem;">{{ meeting.location if meeting.location else 'Not specified' }}</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <strong>👤 Organized by:</strong><br>
+                <span style="font-size: 1.1rem;">{{ meeting.created_by_name }}</span>
+            </div>
+        </div>
+        
+        <div>
+            <h3 style="color: #667eea; margin-bottom: 1rem;">Description</h3>
+            <p style="color: #666; line-height: 1.6;">
+                {{ meeting.description if meeting.description else 'No description provided.' }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h2 class="card-title">👥 Participants ({{ participants|length }})</h2>
+    {% if participants %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Job Level</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participant in participants %}
+            <tr>
+                <td>{{ participant.full_name }}</td>
+                <td>{{ participant.email }}</td>
+                <td><span class="badge badge-{{ participant.job_level }}">{{ participant.job_level|replace('_', ' ')|title }}</span></td>
+                <td><span class="badge badge-{{ participant.status }}">{{ participant.status|title }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 2rem;">No participants added yet.</p>
+    {% endif %}
+</div>
+
+<script>
+async function updateMeetingStatus(status) {
+    try {
+        const response = await fetch('/meetings/{{ meeting.id }}/update-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: status })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error updating status: ' + error);
+    }
+}
+</script>
+{% endblock %}
+
