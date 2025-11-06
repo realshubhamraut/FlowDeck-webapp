@@ -100,37 +100,70 @@ erDiagram
 
 ## Database Triggers
 
-FlowDeck implements 6 SQLite triggers for data integrity and audit logging:
+FlowDeck implements **18 SQLite triggers** for data integrity and audit logging:
 
-### 1. **update_last_login**
-- **Event:** After password update on users table
-- **Purpose:** Automatically updates the `last_login` timestamp when user credentials are verified
-- **Benefit:** Tracks user activity without manual timestamp management
+### User Management Triggers
+1. **update_last_login** - Updates last_login timestamp on password verification
+2. **log_user_creation** - Logs new user creation to activity_log
+3. **log_user_deletion** - Records user deletion before removal
+4. **prevent_last_admin_deletion** - Prevents deleting last admin in organization
+5. **handle_user_deactivation** - Logs when user is deactivated
 
-### 2. **log_user_creation**
-- **Event:** After insert on users table
-- **Purpose:** Automatically creates an activity log entry when new user is created
-- **Details:** Logs user name and role in activity_log for audit trail
+### Task Management Triggers
+6. **update_task_timestamp** - Auto-updates updated_at on task changes
+7. **log_task_status_change** - Logs task status transitions (todo → done)
+8. **log_task_creation** - Logs new task creation
+9. **log_task_deletion** - Records task deletion
+10. **log_task_assignment** - Logs task reassignments
+11. **log_task_priority** - Logs priority changes
+12. **prevent_inactive_task_assignment** - Blocks assignment to inactive users
 
-### 3. **log_user_deletion**
-- **Event:** Before delete on users table
-- **Purpose:** Records user deletion in activity log before the record is removed
-- **Benefit:** Maintains audit history even after data deletion
+### Meeting Management Triggers
+13. **log_meeting_creation** - Logs new meeting creation
+14. **log_meeting_deletion** - Records meeting deletion
+15. **update_meeting_modified** - Logs when participants join
+16. **log_meeting_status_change** - Logs accept/decline actions
+17. **prevent_inactive_meeting_invite** - Blocks invites to inactive users
 
-### 4. **update_task_timestamp**
-- **Event:** After update on tasks table
-- **Purpose:** Automatically updates `updated_at` timestamp whenever task is modified
-- **Benefit:** Tracks task modification history automatically
+### Organization Triggers
+18. **log_organization_update** - Logs organization name changes
 
-### 5. **log_task_status_change**
-- **Event:** After status update on tasks table
-- **Purpose:** Logs every task status change (todo → in_progress → review → done)
-- **Details:** Records old and new status in activity_log for workflow tracking
+---
 
-### 6. **prevent_last_admin_deletion**
-- **Event:** Before delete on users table (admin role only)
-- **Purpose:** Prevents deletion of the last admin in an organization
-- **Benefit:** Ensures every organization always has at least one admin user
+## Stored Procedures (Custom Functions)
+
+FlowDeck includes **10 custom SQLite functions** for advanced queries:
+
+### Date & Time Functions
+1. **days_overdue(due_date)** - Calculates days past due date
+2. **format_duration(minutes)** - Formats minutes to "Xh Ym" format
+
+### User Functions
+3. **user_display_name(name, role)** - Formats name with role badge
+4. **is_admin(user_id)** - Checks admin privileges
+5. **task_completion_rate(user_id)** - Calculates % of completed tasks
+6. **avg_completion_time(user_id)** - Average days to complete tasks
+7. **pending_meetings(user_id)** - Count of pending meeting invites
+
+### Organization Functions
+8. **org_employee_count(org_id)** - Count active employees
+
+### Task Functions
+9. **task_urgency_score(priority, due_date)** - Calculates urgency score
+10. **sanitize_text(text)** - Removes special characters
+
+### Example Usage:
+```sql
+-- Get overdue tasks with urgency scores
+SELECT title, days_overdue(due_date) as overdue_days,
+       task_urgency_score(priority, due_date) as urgency
+FROM tasks WHERE status != 'done' ORDER BY urgency DESC;
+
+-- Get user performance
+SELECT full_name, task_completion_rate(id) as completion_rate,
+       avg_completion_time(id) as avg_days
+FROM users WHERE role = 'employee';
+```
 
 ---
 
