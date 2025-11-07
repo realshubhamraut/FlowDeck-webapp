@@ -96,37 +96,7 @@ erDiagram
 **5. tasks** - Task items with status tracking and priority levels  
 **6. activity_log** - Audit trail of all user actions for security and compliance  
 
----
 
-## Database Triggers
-
-FlowDeck implements **18 SQLite triggers** for data integrity and audit logging:
-
-### User Management Triggers
-1. **update_last_login** - Updates last_login timestamp on password verification
-2. **log_user_creation** - Logs new user creation to activity_log
-3. **log_user_deletion** - Records user deletion before removal
-4. **prevent_last_admin_deletion** - Prevents deleting last admin in organization
-5. **handle_user_deactivation** - Logs when user is deactivated
-
-### Task Management Triggers
-6. **update_task_timestamp** - Auto-updates updated_at on task changes
-7. **log_task_status_change** - Logs task status transitions (todo → done)
-8. **log_task_creation** - Logs new task creation
-9. **log_task_deletion** - Records task deletion
-10. **log_task_assignment** - Logs task reassignments
-11. **log_task_priority** - Logs priority changes
-12. **prevent_inactive_task_assignment** - Blocks assignment to inactive users
-
-### Meeting Management Triggers
-13. **log_meeting_creation** - Logs new meeting creation
-14. **log_meeting_deletion** - Records meeting deletion
-15. **update_meeting_modified** - Logs when participants join
-16. **log_meeting_status_change** - Logs accept/decline actions
-17. **prevent_inactive_meeting_invite** - Blocks invites to inactive users
-
-### Organization Triggers
-18. **log_organization_update** - Logs organization name changes
 
 ---
 
