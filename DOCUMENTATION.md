@@ -96,31 +96,28 @@ erDiagram
 **5. tasks** - Task items with status tracking and priority levels  
 **6. activity_log** - Audit trail of all user actions for security and compliance  
 
-
-
 ---
 
-## Stored Procedures (Custom Functions)
+## Database Triggers
 
-FlowDeck includes **10 custom SQLite functions** for advanced queries:
+### Tables
+1. **organizations** - Organization information
+2. **users** - Employees and admins with authentication
+3. **meetings** - Meeting schedules and details
+4. **meeting_participants** - Meeting attendee tracking
+5. **tasks** - Task management with assignments
+6. **activity_log** - Audit trail for all actions
 
-### Date & Time Functions
-1. **days_overdue(due_date)** - Calculates days past due date
-2. **format_duration(minutes)** - Formats minutes to "Xh Ym" format
+### SQLite Triggers
+1. **update_last_login** - Tracks user login timestamps
+2. **log_user_creation** - Logs new user creation
+3. **log_user_deletion** - Logs user deletion
+4. **update_task_timestamp** - Updates task modification time
+5. **log_task_status_change** - Logs task status changes
+6. **prevent_last_admin_deletion** - Prevents deleting the last admin
+---
 
-### User Functions
-3. **user_display_name(name, role)** - Formats name with role badge
-4. **is_admin(user_id)** - Checks admin privileges
-5. **task_completion_rate(user_id)** - Calculates % of completed tasks
-6. **avg_completion_time(user_id)** - Average days to complete tasks
-7. **pending_meetings(user_id)** - Count of pending meeting invites
 
-### Organization Functions
-8. **org_employee_count(org_id)** - Count active employees
-
-### Task Functions
-9. **task_urgency_score(priority, due_date)** - Calculates urgency score
-10. **sanitize_text(text)** - Removes special characters
 
 ### Example Usage:
 ```sql
